@@ -5,7 +5,8 @@ class Diffusion(object):
     """
     Diffusion problem Finite Difference Method Solver
     """
-    def __init__(self, n_nodes, Deff=10e-10, k=4e-9, Ce=10, R=0.5):
+
+    def __init__(self, n_nodes, Deff=10e-10, k=4e-9, Ce=10, R=0.5, scheme=1):
         """
         Constructor for the Diffusion problem solver
         1D equally spaced finite difference grid
@@ -29,6 +30,12 @@ class Diffusion(object):
         # Initial values for C
         self.C_values = np.zeros_like(self.R_values)
         self.C_values[-1] = self.Ce
+        # Set the system coefficients method
+        if scheme == 1:
+            self.system_coefficients = self.system_coefficients_1
+        
+        elif scheme == 2:
+            self.system_coefficients = self.system_coefficients_2
 
     def step(self, dt, order=0, S=1e-8):
         """
@@ -41,22 +48,45 @@ class Diffusion(object):
         self.C_values = x
         return self.t
 
+    def system_coefficients_1(self, dt, r):
+        """
+        Coefficients of the linear equation system derived from the first
+        differentiation scheme
+        dt : time step (s)
+        r : position in the domain (m)
+        """
+        C1 = (-dt*self.Deff)/self.dr
+        C2 = 1.0 + (2 * dt * self.Deff)/(self.dr ** 2 ) + (dt * self.Deff)/(r * self.dr)
+        C3 = (-dt * self.Deff)/(self.dr ** 2) - (dt * self.Deff) / (r * self.dr)
+        return C1, C2, C3
+
+    def system_coefficients_2(self, dt, r):
+        """
+        Coefficients of the linear equation system derived from the SECOND
+        differentiation scheme
+        dt : time step (s)
+        r : position in the domain (m)
+        """
+        C1 = (dt * self.Deff) / (2 * r * self.dr) - (dt * self.Deff) / (self.dr ** 2)
+        C2 = 1.0 + (2 * dt * self.Deff) / (self.dr ** 2)
+        C3 = (-dt * self.Deff) / (self.dr ** 2) - (dt * self.Deff) / (2 * r * self.dr)
+        return C1, C2, C3
+
+
     def assemble(self, dt):
         """
         Assemble the linear system for a timestep
         """
         # create the system matrix
         A = np.zeros((self.n_nodes, self.n_nodes))
-        coeff1 = (-dt*self.Deff)/self.dr
         for i in np.arange(1, self.n_nodes-1):
             # Compute the t+1 terms coefficients
             r = self.R_values[i]
-            coeff2 = 1.0 + (2 * dt * self.Deff)/(self.dr ** 2 ) + (dt * self.Deff)/(r * self.dr)
-            coeff3 = (-dt * self.Deff)/(self.dr ** 2) - (dt * self.Deff) / (r * self.dr)
             # Construct the linear equation system
-            A[i, i-1] = coeff1
-            A[i, i] = coeff2
-            A[i, i+1] = coeff3
+            C1, C2, C3 = self.system_coefficients(dt, r)
+            A[i, i-1] = C1
+            A[i, i] = C2
+            A[i, i+1] = C3
 
         # Boudary conditions
         A[0, 0] = 1
