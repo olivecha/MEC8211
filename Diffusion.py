@@ -30,12 +30,12 @@ class Diffusion(object):
         self.C_values = np.zeros_like(self.R_values)
         self.C_values[-1] = self.Ce
 
-    def step(self, dt):
+    def step(self, dt, order=0, S=1e-8):
         """
         Step the equation forward in time with a value of dt
         """
         A = self.assemble(dt)
-        b = self.leftside(dt)
+        b = self.leftside(dt, order=order, S=S)
         x = np.linalg.solve(A, b)
         self.t += dt
         self.C_values = x
@@ -63,7 +63,18 @@ class Diffusion(object):
         A[-1, -1] = 1
         return A
 
-    def leftside(self, dt):
+    def leftside(self, dt, order=0, S=1e-8):
+        """
+        Compute the left side of the linear system
+        order : order of the S term
+        S : constant S term value
+        """
         b = self.C_values
-        b[:-1] *= (1 - dt * self.k)
+
+        if order == 0:
+            b[:-1] -= dt*S
+
+        elif order == 1:
+            b[:-1] *= (1 - dt * self.k)
+
         return b
