@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 
 class Diffusion(object):
@@ -56,7 +57,7 @@ class Diffusion(object):
         dt : time step (s)
         r : position in the domain (m)
         """
-        C1 = (-dt*self.Deff)/self.dr
+        C1 = (-dt*self.Deff)/(self.dr ** 2)
         C2 = 1.0 + (2 * dt * self.Deff)/(self.dr ** 2 ) + (dt * self.Deff)/(r * self.dr)
         C3 = (-dt * self.Deff)/(self.dr ** 2) - (dt * self.Deff) / (r * self.dr)
         return C1, C2, C3
@@ -91,8 +92,13 @@ class Diffusion(object):
 
         # Boundary conditions
         if self.scheme == 1:
-            A[0, 0] = 1.0 + (2 * dt * self.Deff) / (self.dr ** 2) + (dt * self.Deff) / (1e-60 * self.dr)
-            A[0, 1] = (-2.0 * dt * self.Deff) / (self.dr ** 2) - (dt * self.Deff) / (1e-60 * self.dr)
+            C1, C2, C3 = self.system_coefficients(dt, 1e-60)
+            A[0, 0] = C2
+            A[0, 1] = C1 + C3
+            # A[0, 0] = 1.0 - (dt * self.Deff) / (1e-60 * self.dr)
+            # A[0, 1] =  - (dt * self.Deff) / (1e-60 * self.dr)
+            #A[0, 0] = 1.0 + (2 * dt * self.Deff) / (self.dr ** 2) + (dt * self.Deff) / (1e-60 * self.dr)
+            #A[0, 1] = (-2.0 * dt * self.Deff) / (self.dr ** 2) - (dt * self.Deff) / (1e-60 * self.dr)
 
         elif self.scheme == 2:
             A[0, 0] = 1 + (2 * dt * self.Deff) / (self.dr ** 2)
@@ -117,3 +123,27 @@ class Diffusion(object):
         
         return b
 
+    def solve_for_n_nodes(self, n, scheme=None, step_size=1e8, max_solve_time=10.0):
+        """
+        Solve the diffusion problem with a grid containing n nodes
+        """
+        # Re instanciate the problem class
+        self.__init__(n, scheme=scheme)
+        # Convergence variables
+        change = 100
+        now = time.time()
+        # Solve until the change is almost zero
+        while ~np.isclose(change, 0):
+            # store the Concentration array
+            C_vals = self.C_values.copy()
+            # Step forward in time
+            _ = self.step(step_size, order=0)
+            # Compute the change (L1 norm)
+            change = np.sum(np.abs(C_vals - self.C_values))
+            # Check the time-out criterion
+            if (time.time() - now) > max_solve_time :
+                print(f'Timed out for n = {n}')
+                break
+
+        return self.C_values, self.R_values
+    
