@@ -123,7 +123,7 @@ class Diffusion(object):
         
         return b
 
-    def solve_for_n_nodes(self, n, scheme=None, step_size=1e8, max_solve_time=10.0):
+    def solve_for_n_nodes(self, n, scheme=None, order=0, step_size=1e8, max_solve_time=10.0):
         """
         Solve the diffusion problem with a grid containing n nodes
         """
@@ -146,4 +146,10 @@ class Diffusion(object):
                 break
 
         return self.C_values, self.R_values
+
+    @staticmethod
+    def analytical_solution(r):
+        """ Analytical solution for validation """
+        C = 0.25 * 1e-8/1e-10  * 0.5**2 * ((r/0.5)**2 - 1) + 10
+        return C
     
