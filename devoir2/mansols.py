@@ -32,3 +32,21 @@ def mms_poly(r):
 def mms_source_poly(r):
     R = -72.0 * 10 * 1e-10 * r
     return R
+
+
+def mms_source_time(r, t):
+    De = 1e-10
+    Cs = 10.0
+    R = 0.5
+    r = np.max([r, np.ones_like(r)*1e-20], axis=0)
+    t = np.max([t, np.ones_like(t)*1e-20], axis=0)
+    T1 = - De*(np.pi**2*Cs*np.cos(np.pi*r/R)/(2*R**2) + 4*r*np.log(t) - 2*(R - r)*np.log(t))
+    T2 = - De*(np.pi*Cs*np.sin(np.pi*r/R)/(2*R) + r**2*np.log(t) + 2*r*(-R + r)*np.log(t))/r
+    T3 = r**2*(-R + r)/t
+    return T1 + T2 + T3
+
+
+def mms_time(r, t):
+    Cs = 10.0
+    R = 0.5
+    return Cs*(1 - np.cos(np.pi*r/R))/2 + r**2*(-R + r)*np.log(t+1)
