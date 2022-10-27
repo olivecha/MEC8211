@@ -28,6 +28,7 @@ class Diffusion(object):
         self.R = R
         self.default_source = default_source
         self.t = 0.0  # start at t = 0
+        self.time_history = [self.t]
         # Create the grid and the grid size
         self.R_values = np.linspace(0, R, self.n_nodes)
         self.dr = self.R_values[1]
@@ -44,6 +45,7 @@ class Diffusion(object):
         b = self.leftside(dt, S=S, source_term=source_term)
         x = np.linalg.solve(A, b)
         self.t += dt
+        self.time_history.append(self.t)
         self.C_values = x
         return self.t
 
@@ -93,7 +95,10 @@ class Diffusion(object):
 
         # If a source term is provided add it to the concentration values
         if source_term is not None:
-            b[:-1] += source_term(self.R_values)[:-1]*dt
+            try:
+                b[:-1] += source_term(self.R_values)[:-1]*dt
+            except TypeError:
+                b[:-1] += source_term(self.R_values, self.t)[:-1]*dt
 
         if self.default_source:
             b[:-1] *= (1 - dt * self.k)
