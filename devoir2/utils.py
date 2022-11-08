@@ -14,7 +14,7 @@ def nL2(v1, v2):
     v1 : premier vecteur
     v2 : deuxième vecteur
     """
-    return np.sqrt(np.sum((v1 - v2)**2))/len(v1)
+    return np.sqrt(np.sum((v1 - v2)**2)/len(v1))
 
 def nLi(v1, v2):
     """ 

@@ -130,3 +130,9 @@ dmypy.json
 
 # MacOS is wierd
 .DS_Store
+
+# Executables
+.exe
+.out
+*.exe
+*.out
