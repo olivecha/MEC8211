@@ -19,6 +19,7 @@
 
 program launcher
 
+    use structure_generator
     implicit none
 
     ! Variable declarations
@@ -29,20 +30,20 @@ program launcher
     real :: mean_D
     real :: std_D
     real :: poro
+    real :: d_eq
     character(:), allocatable :: filename
 
     ! Variable assignment
-    seed     = 0
+    seed     = 2
     Nx       = 200
     Dx       = 1e-6  ! Meters
     deltaP  = 0.1   ! Pa
     mean_D   = 12.5  ! Microns
     std_D    = 2.85  ! Microns
     poro     = 0.9
-    filename = 'fiber_mat.tiff'
+    filename = 'fiber_mat'
 
-    ! Function call
-    print *, filename
+    call generate_sample(seed_value=2, filename=filename, mean_d=mean_D, std_d=std_D, poro=poro,  nx=Nx,  d_equivalent=d_eq)
 
 end program launcher
 
